@@ -3,14 +3,13 @@ from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
 import torch
 from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
+from torchvision.datasets import MNIST
 from sklearn.cluster import KMeans
 
 from ptsdae.sdae import StackedDenoisingAutoEncoder
 import ptsdae.model as ae
 from ptdec.utils import cluster_accuracy
-
-from torchvision import transforms
-from torchvision.datasets import MNIST
 
 
 class CachedMNIST(Dataset):
@@ -84,6 +83,7 @@ def main(
     ae.pretrain(
         ds_train,
         autoencoder,
+        cuda=cuda,
         validation=ds_val,
         epochs=pretrain_epochs,
         batch_size=batch_size,
@@ -97,6 +97,7 @@ def main(
     ae.train(
         ds_train,
         autoencoder,
+        cuda=cuda,
         validation=ds_val,
         epochs=finetune_epochs,
         batch_size=batch_size,
