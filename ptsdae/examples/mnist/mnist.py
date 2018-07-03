@@ -74,12 +74,10 @@ def main(
 ):
     ds_train = CachedMNIST(train=True, cuda=cuda)
     ds_val = CachedMNIST(train=False, cuda=cuda)
-
     autoencoder = StackedDenoisingAutoEncoder(
         [28 * 28, 500, 500, 2000, 10],
         final_activation=None
     ).cuda()
-
     ae.pretrain(
         ds_train,
         autoencoder,
@@ -91,9 +89,7 @@ def main(
         scheduler=lambda x: StepLR(x, 100, gamma=0.1),
         corruption=0.2
     )
-
     ae_optimizer = SGD(params=autoencoder.parameters(), lr=0.1, momentum=0.9)
-
     ae.train(
         ds_train,
         autoencoder,
@@ -105,7 +101,6 @@ def main(
         scheduler=StepLR(ae_optimizer, 100, gamma=0.1),
         corruption=0.2,
     )
-
     dataloader = DataLoader(
         ds_train,
         batch_size=1024,
@@ -113,7 +108,6 @@ def main(
     )
     kmeans = KMeans(n_clusters=10, n_init=20)
     autoencoder.eval()
-    cuda = True
     features = []
     actual = []
     for index, batch in enumerate(dataloader):

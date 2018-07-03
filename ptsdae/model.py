@@ -110,6 +110,8 @@ def train(dataset: torch.utils.data.Dataset,
                         silent=True,
                         encode=False
                     )
+                    if cuda:
+                        validation_output = validation_output.cuda(async=True)
                     validation_inputs = []
                     for val_batch in validation_loader:
                         if (isinstance(val_batch, tuple) or isinstance(val_batch, list)) and len(val_batch) == 2:
