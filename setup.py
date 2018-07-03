@@ -24,5 +24,5 @@ setup(
         'tqdm>=4.11.2',
         'scikit-learn>=0.19.1'
     ],
-    packages=['pt-sdae']
+    packages=['ptsdae']
 )
