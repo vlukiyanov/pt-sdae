@@ -2,7 +2,7 @@ from setuptools import setup
 
 
 setup(
-    name='pt-sdae',
+    name='ptsdae',
     version='1.0',
     description='PyTorch implementation of SDAE.',
     author='Vladimir Lukiyanov',
