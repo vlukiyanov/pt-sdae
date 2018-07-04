@@ -21,7 +21,7 @@ def train(dataset: torch.utils.data.Dataset,
           cuda: bool = True,
           sampler: Optional[torch.utils.data.sampler.Sampler] = None,
           silent: bool = False,
-          update_freq: Optional[int] = None,
+          update_freq: Optional[int] = 1,
           update_callback: Optional[Callable[[float, float], None]] = None,
           epoch_callback: Optional[Callable[[int, torch.nn.Module], None]] = None) -> None:
     """
@@ -39,13 +39,11 @@ def train(dataset: torch.utils.data.Dataset,
     :param cuda: whether CUDA is used, defaults to True
     :param sampler: sampler to use in the DataLoader, set to None to disable, defaults to None
     :param silent: set to True to prevent printing out summary statistics, defaults to False
-    :param update_freq: frequency of batches with which to update counter, set to None disables, default 1/10 of epochs
+    :param update_freq: frequency of batches with which to update counter, set to None disables, default 1
     :param update_callback: optional function of loss and validation loss to update
     :param epoch_callback: optional function of epoch and model
     :return: None
     """
-    if update_freq is None:
-        update_freq = max(epochs // 10, 1)  # default 1/10 of epochs
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
@@ -65,6 +63,8 @@ def train(dataset: torch.utils.data.Dataset,
         validation_loader = None
     loss_function = nn.MSELoss()
     autoencoder.train()
+    validation_loss_value = -1
+    loss_value = 0
     for epoch in range(epochs):
         if scheduler is not None:
             scheduler.step()
@@ -92,49 +92,55 @@ def train(dataset: torch.utils.data.Dataset,
             else:
                 output = autoencoder(batch)
             loss = loss_function(output, batch)
+            # accuracy = pretrain_accuracy(output, batch)
+            loss_value = float(loss.item())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step(closure=None)
-            if update_freq is not None and index % update_freq == 0:
-                # accuracy = pretrain_accuracy(output, batch)
-                loss_value = float(loss.item())
-                if validation_loader is not None:
-                    validation_output = predict(
-                        validation,
-                        autoencoder,
-                        batch_size,
-                        cuda=cuda,
-                        silent=True,
-                        encode=False
-                    )
-                    if cuda:
-                        validation_output = validation_output.cuda(async=True)
-                    validation_inputs = []
-                    for val_batch in validation_loader:
-                        if (isinstance(val_batch, tuple) or isinstance(val_batch, list)) and len(val_batch) == 2:
-                            validation_inputs.append(val_batch[0])
-                        else:
-                            validation_inputs.append(val_batch)
-                    validation_actual = torch.cat(validation_inputs)
-                    validation_loss = loss_function(validation_output, validation_actual)
-                    # validation_accuracy = pretrain_accuracy(validation_output, validation_actual)
-                    validation_loss_value = float(validation_loss.item())
-                    data_iterator.set_postfix(
-                        epo=epoch,
-                        lss='%.6f' % loss_value,
-                        vls='%.6f' % validation_loss_value,
-                    )
-                    autoencoder.train()
-                else:
-                    validation_loss_value = -1
-                    #validation_accuracy = -1
-                    data_iterator.set_postfix(
-                        epo=epoch,
-                        lss='%.6f' % loss_value,
-                        vls='%.6f' % -1,
-                    )
-                if update_callback is not None:
-                    update_callback(loss_value, validation_loss_value)
+            data_iterator.set_postfix(
+                epo=epoch,
+                lss='%.6f' % loss_value,
+                vls='%.6f' % validation_loss_value,
+            )
+        if update_freq is not None and epoch % update_freq == 0:
+            if validation_loader is not None:
+                validation_output = predict(
+                    validation,
+                    autoencoder,
+                    batch_size,
+                    cuda=cuda,
+                    silent=True,
+                    encode=False
+                )
+                validation_inputs = []
+                for val_batch in validation_loader:
+                    if (isinstance(val_batch, tuple) or isinstance(val_batch, list)) and len(val_batch) == 2:
+                        validation_inputs.append(val_batch[0])
+                    else:
+                        validation_inputs.append(val_batch)
+                validation_actual = torch.cat(validation_inputs)
+                if cuda:
+                    validation_actual = validation_actual.cuda(async=True)
+                    validation_output = validation_output.cuda(async=True)
+                validation_loss = loss_function(validation_output, validation_actual)
+                # validation_accuracy = pretrain_accuracy(validation_output, validation_actual)
+                validation_loss_value = float(validation_loss.item())
+                data_iterator.set_postfix(
+                    epo=epoch,
+                    lss='%.6f' % loss_value,
+                    vls='%.6f' % validation_loss_value,
+                )
+                autoencoder.train()
+            else:
+                validation_loss_value = -1
+                #validation_accuracy = -1
+                data_iterator.set_postfix(
+                    epo=epoch,
+                    lss='%.6f' % loss_value,
+                    vls='%.6f' % -1,
+                )
+            if update_callback is not None:
+                update_callback(epoch, optimizer.param_groups[0]['lr'], loss_value, validation_loss_value)
         if epoch_callback is not None:
             autoencoder.eval()
             epoch_callback(epoch, autoencoder)
@@ -152,7 +158,7 @@ def pretrain(dataset,
              cuda: bool = True,
              sampler: Optional[torch.utils.data.sampler.Sampler] = None,
              silent: bool = False,
-             update_freq: Optional[int] = None,
+             update_freq: Optional[int] = 1,
              update_callback: Optional[Callable[[float, float], None]] = None,
              epoch_callback: Optional[Callable[[int, torch.nn.Module], None]] = None) -> None:
     """
@@ -171,7 +177,7 @@ def pretrain(dataset,
     :param cuda: whether CUDA is used, defaults to True
     :param sampler: sampler to use in the DataLoader, defaults to None
     :param silent: set to True to prevent printing out summary statistics, defaults to False
-    :param update_freq: frequency of batches with which to update counter, None disables, default 1/10 of epochs
+    :param update_freq: frequency of batches with which to update counter, None disables, default 1
     :param update_callback: function of loss and validation loss to update
     :param epoch_callback: function of epoch and model
     :return: None
