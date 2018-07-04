@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from ptsdae.dae import DenoisingAutoencoder
 from ptsdae.sdae import StackedDenoisingAutoEncoder
-from ptsdae.utils import SimpleDataset, pretrain_accuracy
+from ptsdae.utils import SimpleDataset
 
 
 def train(dataset: torch.utils.data.Dataset,
