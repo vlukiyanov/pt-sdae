@@ -40,7 +40,7 @@ def train(dataset: torch.utils.data.Dataset,
     :param sampler: sampler to use in the DataLoader, set to None to disable, defaults to None
     :param silent: set to True to prevent printing out summary statistics, defaults to False
     :param update_freq: frequency of batches with which to update counter, set to None disables, default 1/10 of epochs
-    :param update_callback: optional function of accuracy and loss to update
+    :param update_callback: optional function of loss and validation loss to update
     :param epoch_callback: optional function of epoch and model
     :return: None
     """
@@ -74,10 +74,8 @@ def train(dataset: torch.utils.data.Dataset,
             unit='batch',
             postfix={
                 'epo': epoch,
-                'acc': '%.4f' % 0.0,
                 'lss': '%.6f' % 0.0,
                 'vls': '%.6f' % -1,
-                'vac': '%.6f' % -1,
             },
             disable=silent,
         )
@@ -98,9 +96,8 @@ def train(dataset: torch.utils.data.Dataset,
             loss.backward()
             optimizer.step(closure=None)
             if update_freq is not None and index % update_freq == 0:
-                accuracy = pretrain_accuracy(output, batch)  # possibly not the most useful metric
+                # accuracy = pretrain_accuracy(output, batch)
                 loss_value = float(loss.item())
-                # if we have validation data, then calculate the more useful validation loss
                 if validation_loader is not None:
                     validation_output = predict(
                         validation,
@@ -120,28 +117,24 @@ def train(dataset: torch.utils.data.Dataset,
                             validation_inputs.append(val_batch)
                     validation_actual = torch.cat(validation_inputs)
                     validation_loss = loss_function(validation_output, validation_actual)
-                    validation_accuracy = pretrain_accuracy(validation_output, validation_actual)
+                    # validation_accuracy = pretrain_accuracy(validation_output, validation_actual)
                     validation_loss_value = float(validation_loss.item())
                     data_iterator.set_postfix(
                         epo=epoch,
-                        acc='%.4f' % accuracy,
                         lss='%.6f' % loss_value,
                         vls='%.6f' % validation_loss_value,
-                        vac='%.6f' % validation_accuracy
                     )
                     autoencoder.train()
                 else:
                     validation_loss_value = -1
-                    validation_accuracy = -1
+                    #validation_accuracy = -1
                     data_iterator.set_postfix(
                         epo=epoch,
-                        acc='%.4f' % accuracy,
                         lss='%.6f' % loss_value,
                         vls='%.6f' % -1,
-                        vac='%.6f' % -1
                     )
                 if update_callback is not None:
-                    update_callback(accuracy, loss_value, validation_accuracy, validation_loss_value)
+                    update_callback(loss_value, validation_loss_value)
         if epoch_callback is not None:
             autoencoder.eval()
             epoch_callback(epoch, autoencoder)
@@ -179,7 +172,7 @@ def pretrain(dataset,
     :param sampler: sampler to use in the DataLoader, defaults to None
     :param silent: set to True to prevent printing out summary statistics, defaults to False
     :param update_freq: frequency of batches with which to update counter, None disables, default 1/10 of epochs
-    :param update_callback: function of accuracy and loss to update
+    :param update_callback: function of loss and validation loss to update
     :param epoch_callback: function of epoch and model
     :return: None
     """
