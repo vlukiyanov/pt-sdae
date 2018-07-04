@@ -177,6 +177,7 @@ def pretrain(dataset,
     :return: None
     """
     current_dataset = dataset
+    current_validation = validation
     number_of_subautoencoders = len(autoencoder.dimensions) - 1
     for index in range(number_of_subautoencoders):
         encoder, decoder = autoencoder.get_stack(index)
@@ -202,7 +203,7 @@ def pretrain(dataset,
             epochs,
             batch_size,
             ae_optimizer,
-            validation=validation,
+            validation=current_validation,
             corruption=None,  # already have dropout in the DAE
             scheduler=ae_scheduler,
             cuda=cuda,
@@ -225,8 +226,18 @@ def pretrain(dataset,
                     silent=silent
                 )
             )
+            current_validation = SimpleDataset(
+                predict(
+                    current_validation,
+                    sub_autoencoder,
+                    batch_size,
+                    cuda=cuda,
+                    silent=silent
+                )
+            )
         else:
             current_dataset = None  # minor optimisation on the last subautoencoder
+            current_validation = None
 
 
 def predict(
