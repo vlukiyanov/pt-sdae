@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import MNIST
+from tensorboardX import SummaryWriter
 from sklearn.cluster import KMeans
 
 from ptsdae.sdae import StackedDenoisingAutoEncoder
@@ -72,6 +73,13 @@ def main(
     pretrain_epochs,
     finetune_epochs
 ):
+    writer = SummaryWriter()
+    def traing_callback(epoch, lr, loss, validation_loss):
+        writer.add_scalars('data/autoencoder', {
+            'lr': lr,
+            'loss': loss,
+            'validation_loss': validation_loss,
+        }, epoch)
     ds_train = CachedMNIST(train=True, cuda=cuda)
     ds_val = CachedMNIST(train=False, cuda=cuda)
     autoencoder = StackedDenoisingAutoEncoder(
@@ -100,6 +108,7 @@ def main(
         optimizer=ae_optimizer,
         scheduler=StepLR(ae_optimizer, 100, gamma=0.1),
         corruption=0.2,
+        update_callback=traing_callback
     )
     dataloader = DataLoader(
         ds_train,
@@ -122,6 +131,13 @@ def main(
     predicted = kmeans.fit_predict(torch.cat(features).numpy())
     accuracy = cluster_accuracy(predicted, actual.cpu().numpy())
     print('Final k-Means accuracy: %s' % accuracy)
+    writer.add_embedding(
+        torch.cat(features),
+        metadata=predicted,
+        label_img=ds_train.ds.train_data.float().unsqueeze(1),
+        tag='predicted'
+    )
+    writer.close()
 
 
 if __name__ == '__main__':
