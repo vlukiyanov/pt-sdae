@@ -73,19 +73,23 @@ def main(
     pretrain_epochs,
     finetune_epochs
 ):
-    writer = SummaryWriter()
-    def traing_callback(epoch, lr, loss, validation_loss):
+    writer = SummaryWriter()  # create the TensorBoard object
+    # callback function to call during training, uses writer from the scope
+    def training_callback(epoch, lr, loss, validation_loss):
         writer.add_scalars('data/autoencoder', {
             'lr': lr,
             'loss': loss,
             'validation_loss': validation_loss,
         }, epoch)
-    ds_train = CachedMNIST(train=True, cuda=cuda)
-    ds_val = CachedMNIST(train=False, cuda=cuda)
+    ds_train = CachedMNIST(train=True, cuda=cuda)  # training dataset
+    ds_val = CachedMNIST(train=False, cuda=cuda)  # evaluation dataset
     autoencoder = StackedDenoisingAutoEncoder(
         [28 * 28, 500, 500, 2000, 10],
         final_activation=None
-    ).cuda()
+    )
+    if cuda:
+        autoencoder.cuda()
+    print('Pretraining stage.')
     ae.pretrain(
         ds_train,
         autoencoder,
@@ -97,6 +101,7 @@ def main(
         scheduler=lambda x: StepLR(x, 100, gamma=0.1),
         corruption=0.2
     )
+    print('Training stage.')
     ae_optimizer = SGD(params=autoencoder.parameters(), lr=0.1, momentum=0.9)
     ae.train(
         ds_train,
@@ -108,8 +113,9 @@ def main(
         optimizer=ae_optimizer,
         scheduler=StepLR(ae_optimizer, 100, gamma=0.1),
         corruption=0.2,
-        update_callback=traing_callback
+        update_callback=training_callback
     )
+    print('k-Means stage')
     dataloader = DataLoader(
         ds_train,
         batch_size=1024,
@@ -134,7 +140,7 @@ def main(
     writer.add_embedding(
         torch.cat(features),
         metadata=predicted,
-        label_img=ds_train.ds.train_data.float().unsqueeze(1),
+        label_img=ds_train.ds.train_data.float().unsqueeze(1),  # TODO bit ugly
         tag='predicted'
     )
     writer.close()
