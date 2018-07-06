@@ -1,13 +1,16 @@
 import click
+import numpy as np
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
 from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import MNIST
-from torchvision.utils import save_image
 from tensorboardX import SummaryWriter
 from sklearn.cluster import KMeans
+import uuid
 
 from ptsdae.sdae import StackedDenoisingAutoEncoder
 import ptsdae.model as ae
@@ -67,6 +70,7 @@ class CachedMNIST(Dataset):
     '--finetune-epochs',
     help='number of finetune epochs (default 500).',
     type=int,
+    default=500
 )
 def main(
     cuda,
@@ -134,10 +138,16 @@ def main(
             batch = batch.cuda(async=True)
         batch = batch.squeeze(1).view(batch.size(0), -1)
         features.append(autoencoder.encoder(batch).detach().cpu())
-    actual = torch.cat(actual).long()
+    actual = torch.cat(actual).long().cpu().numpy()
     predicted = kmeans.fit_predict(torch.cat(features).numpy())
-    accuracy = cluster_accuracy(predicted, actual.cpu().numpy())
+    reassignment, accuracy = cluster_accuracy(predicted, actual)
     print('Final k-Means accuracy: %s' % accuracy)
+    predicted_reassigned = [reassignment[item] for item in predicted]  # TODO numpify
+    confusion = confusion_matrix(actual, predicted_reassigned)
+    normalised_confusion = confusion.astype('float') / confusion.sum(axis=1)[:, np.newaxis]
+    confusion_id = uuid.uuid4().hex
+    sns.heatmap(normalised_confusion).get_figure().savefig('confusion_%s.png' % confusion_id)
+    print('Writing out confusion diagram with UUID: %s' % confusion_id)
     writer.add_embedding(
         torch.cat(features),
         metadata=predicted,
