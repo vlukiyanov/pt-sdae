@@ -30,8 +30,6 @@ def pretrain_accuracy(output: torch.Tensor, batch: torch.Tensor) -> float:
     return numerator / denominator
 
 
-
-
 def cluster_accuracy(y_true, y_predicted, cluster_number: Optional[int] = None):
     """
     Calculate clustering accuracy after using the linear_sum_assignment function in SciPy to
