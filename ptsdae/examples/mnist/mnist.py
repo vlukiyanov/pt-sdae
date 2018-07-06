@@ -5,12 +5,13 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import MNIST
+from torchvision.utils import save_image
 from tensorboardX import SummaryWriter
 from sklearn.cluster import KMeans
 
 from ptsdae.sdae import StackedDenoisingAutoEncoder
 import ptsdae.model as ae
-from ptdec.utils import cluster_accuracy
+from ptsdae.utils import cluster_accuracy
 
 
 class CachedMNIST(Dataset):
