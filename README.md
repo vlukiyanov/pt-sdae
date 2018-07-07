@@ -3,7 +3,7 @@ PyTorch implementation of a version of the Stacked Denoising AutoEncoder. Compat
 
 ## Examples
 
-An example using MNIST data can be found in the examples/mnist/mnist.py which achieves around 80% accuracy using
+An example using MNIST data can be found in the `examples/mnist/mnist.py` which achieves around 80% accuracy using
 k-Means on the encoded values.
 
 Here is an example [confusion matrix](http://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html), true labels on y-axis and predicted labels on the x-axis.
