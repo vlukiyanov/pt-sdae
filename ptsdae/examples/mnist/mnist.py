@@ -39,8 +39,8 @@ class CachedMNIST(Dataset):
         if index not in self._cache:
             self._cache[index] = list(self.ds[index])
             if self.cuda:
-                self._cache[index][0] = self._cache[index][0].cuda(async=True)
-                self._cache[index][1] = self._cache[index][1].cuda(async=True)
+                self._cache[index][0] = self._cache[index][0].cuda(non_blocking=True)
+                self._cache[index][1] = self._cache[index][1].cuda(non_blocking=True)
         return self._cache[index]
 
     def __len__(self) -> int:
@@ -80,6 +80,7 @@ def main(
 ):
     writer = SummaryWriter()  # create the TensorBoard object
     # callback function to call during training, uses writer from the scope
+
     def training_callback(epoch, lr, loss, validation_loss):
         writer.add_scalars('data/autoencoder', {
             'lr': lr,
@@ -135,7 +136,7 @@ def main(
             batch, value = batch  # if we have a prediction label, separate it to actual
             actual.append(value)
         if cuda:
-            batch = batch.cuda(async=True)
+            batch = batch.cuda(non_blocking=True)
         batch = batch.squeeze(1).view(batch.size(0), -1)
         features.append(autoencoder.encoder(batch).detach().cpu())
     actual = torch.cat(actual).long().cpu().numpy()
