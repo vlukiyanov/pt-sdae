@@ -1,0 +1,11 @@
+language: python
+python:
+  - "3.6"
+  - "3.7"
+# command to install dependencies
+install:
+  - python setup.py build
+# command to run tests
+script:
+  - bash lint.sh
+  - python setup.py test
