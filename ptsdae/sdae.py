@@ -86,7 +86,7 @@ class StackedDenoisingAutoEncoder(nn.Module):
         """
         if (index > len(self.dimensions) - 2) or (index < 0):
             raise ValueError('Requested subautoencoder cannot be constructed, index out of range.')
-        return self.encoder[index].linear, self.decoder[-(index+1)].linear
+        return self.encoder[index].linear, self.decoder[-(index + 1)].linear
 
     def forward(self, batch: torch.Tensor) -> torch.Tensor:
         encoded = self.encoder(batch)
