@@ -18,7 +18,7 @@ from ptsdae.utils import cluster_accuracy
 
 
 class CachedMNIST(Dataset):
-    def __init__(self, train, cuda):
+    def __init__(self, train, cuda, testing_mode=False):
         img_transform = transforms.Compose([
             transforms.Lambda(self._transformation)
         ])
@@ -29,6 +29,7 @@ class CachedMNIST(Dataset):
             transform=img_transform
         )
         self.cuda = cuda
+        self.testing_mode = testing_mode
         self._cache = dict()
 
     @staticmethod
@@ -44,7 +45,7 @@ class CachedMNIST(Dataset):
         return self._cache[index]
 
     def __len__(self) -> int:
-        return len(self.ds)
+        return 128 if self.testing_mode else len(self.ds)
 
 
 @click.command()
@@ -72,11 +73,18 @@ class CachedMNIST(Dataset):
     type=int,
     default=500
 )
+@click.option(
+    '--testing-mode',
+    help='whether to run in testing mode (default False).',
+    type=bool,
+    default=False
+)
 def main(
     cuda,
     batch_size,
     pretrain_epochs,
-    finetune_epochs
+    finetune_epochs,
+    testing_mode
 ):
     writer = SummaryWriter()  # create the TensorBoard object
     # callback function to call during training, uses writer from the scope
@@ -87,8 +95,8 @@ def main(
             'loss': loss,
             'validation_loss': validation_loss,
         }, epoch)
-    ds_train = CachedMNIST(train=True, cuda=cuda)  # training dataset
-    ds_val = CachedMNIST(train=False, cuda=cuda)  # evaluation dataset
+    ds_train = CachedMNIST(train=True, cuda=cuda, testing_mode=testing_mode)  # training dataset
+    ds_val = CachedMNIST(train=False, cuda=cuda, testing_mode=testing_mode)  # evaluation dataset
     autoencoder = StackedDenoisingAutoEncoder(
         [28 * 28, 500, 500, 2000, 10],
         final_activation=None
@@ -144,18 +152,19 @@ def main(
     reassignment, accuracy = cluster_accuracy(predicted, actual)
     print('Final k-Means accuracy: %s' % accuracy)
     predicted_reassigned = [reassignment[item] for item in predicted]  # TODO numpify
-    confusion = confusion_matrix(actual, predicted_reassigned)
-    normalised_confusion = confusion.astype('float') / confusion.sum(axis=1)[:, np.newaxis]
-    confusion_id = uuid.uuid4().hex
-    sns.heatmap(normalised_confusion).get_figure().savefig('confusion_%s.png' % confusion_id)
-    print('Writing out confusion diagram with UUID: %s' % confusion_id)
-    writer.add_embedding(
-        torch.cat(features),
-        metadata=predicted,
-        label_img=ds_train.ds.train_data.float().unsqueeze(1),  # TODO bit ugly
-        tag='predicted'
-    )
-    writer.close()
+    if not testing_mode:
+        confusion = confusion_matrix(actual, predicted_reassigned)
+        normalised_confusion = confusion.astype('float') / confusion.sum(axis=1)[:, np.newaxis]
+        confusion_id = uuid.uuid4().hex
+        sns.heatmap(normalised_confusion).get_figure().savefig('confusion_%s.png' % confusion_id)
+        print('Writing out confusion diagram with UUID: %s' % confusion_id)
+        writer.add_embedding(
+            torch.cat(features),
+            metadata=predicted,
+            label_img=ds_train.ds.train_data.float().unsqueeze(1),  # TODO bit ugly
+            tag='predicted'
+        )
+        writer.close()
 
 
 if __name__ == '__main__':
