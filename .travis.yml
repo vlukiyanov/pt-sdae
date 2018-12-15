@@ -7,5 +7,4 @@ install:
   - python setup.py install
 # command to run tests
 script:
-  - bash lint.sh
   - python setup.py test
