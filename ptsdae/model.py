@@ -232,15 +232,16 @@ def pretrain(dataset,
                     silent=silent
                 )
             )
-            current_validation = SimpleDataset(
-                predict(
-                    current_validation,
-                    sub_autoencoder,
-                    batch_size,
-                    cuda=cuda,
-                    silent=silent
+            if current_validation is not None:
+                current_validation = SimpleDataset(
+                    predict(
+                        current_validation,
+                        sub_autoencoder,
+                        batch_size,
+                        cuda=cuda,
+                        silent=silent
+                    )
                 )
-            )
         else:
             current_dataset = None  # minor optimisation on the last subautoencoder
             current_validation = None
