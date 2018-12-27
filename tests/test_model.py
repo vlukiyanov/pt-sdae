@@ -3,6 +3,8 @@ import torch
 from torch.utils.data import TensorDataset
 from unittest.mock import Mock
 
+# TODO add tests for pretrain, which is admittedly not easy
+
 
 def test_train_with_prediction():
     autoencoder = Mock()
@@ -51,4 +53,14 @@ def test_predict_encode():
     dataset = TensorDataset(torch.zeros(100, 1000))
     output = predict(dataset, autoencoder, batch_size=10, cuda=False, encode=True)
     assert autoencoder.encode.call_count == 10
+    assert output.shape == (100, 1000)
+
+
+def test_predict():
+    # only tests the encode=False
+    autoencoder = Mock()
+    autoencoder.return_value = torch.zeros(10, 1000)
+    dataset = TensorDataset(torch.zeros(100, 1000))
+    output = predict(dataset, autoencoder, batch_size=10, cuda=False, encode=False)
+    assert autoencoder.call_count == 10
     assert output.shape == (100, 1000)
