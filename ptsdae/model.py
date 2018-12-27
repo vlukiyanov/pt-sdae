@@ -81,8 +81,11 @@ def train(dataset: torch.utils.data.Dataset,
         )
         for index, batch in enumerate(data_iterator):
             # unpack the batch if its consists of a (feature, prediction) tuple or list
-            if (isinstance(batch, tuple) or isinstance(batch, list)) and len(batch) == 2:
-                batch, _ = batch  # if we have a prediction label, strip it away
+            if isinstance(batch, tuple) or isinstance(batch, list):
+                if len(batch) == 2:
+                    batch, _ = batch  # if we have a prediction label, strip it away
+                elif len(batch) == 1:
+                    batch = batch[0]
             if cuda:
                 batch = batch.cuda(non_blocking=True)
             batch = batch.squeeze(1).view(batch.size(0), -1)
@@ -114,7 +117,7 @@ def train(dataset: torch.utils.data.Dataset,
                 )
                 validation_inputs = []
                 for val_batch in validation_loader:
-                    if (isinstance(val_batch, tuple) or isinstance(val_batch, list)) and len(val_batch) == 2:
+                    if (isinstance(val_batch, tuple) or isinstance(val_batch, list)) and len(val_batch) in [1, 2]:
                         validation_inputs.append(val_batch[0])
                     else:
                         validation_inputs.append(val_batch)
@@ -282,8 +285,11 @@ def predict(
     if isinstance(model, torch.nn.Module):
         model.eval()
     for index, batch in enumerate(data_iterator):
-        if (isinstance(batch, tuple) or isinstance(batch, list)) and len(batch) == 2:
-            batch, value = batch  # if we have a prediction label strip it away
+        if isinstance(batch, tuple) or isinstance(batch, list):
+            if len(batch) == 2:
+                batch, value = batch  # if we have a prediction label strip it away
+            elif len(batch) == 1:
+                batch = batch[0]
         if cuda:
             batch = batch.cuda(non_blocking=True)
         batch = batch.squeeze(1).view(batch.size(0), -1)
