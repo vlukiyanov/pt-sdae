@@ -80,12 +80,8 @@ def train(dataset: torch.utils.data.Dataset,
             disable=silent,
         )
         for index, batch in enumerate(data_iterator):
-            # unpack the batch if its consists of a (feature, prediction) tuple or list
-            if isinstance(batch, tuple) or isinstance(batch, list):
-                if len(batch) == 2:
-                    batch, _ = batch  # if we have a prediction label, strip it away
-                elif len(batch) == 1:
-                    batch = batch[0]
+            if isinstance(batch, tuple) or isinstance(batch, list) and len(batch) in [1, 2]:
+                batch = batch[0]
             if cuda:
                 batch = batch.cuda(non_blocking=True)
             batch = batch.squeeze(1).view(batch.size(0), -1)
@@ -285,11 +281,8 @@ def predict(
     if isinstance(model, torch.nn.Module):
         model.eval()
     for index, batch in enumerate(data_iterator):
-        if isinstance(batch, tuple) or isinstance(batch, list):
-            if len(batch) == 2:
-                batch, value = batch  # if we have a prediction label strip it away
-            elif len(batch) == 1:
-                batch = batch[0]
+        if isinstance(batch, tuple) or isinstance(batch, list) and len(batch) in [1, 2]:
+            batch = batch[0]
         if cuda:
             batch = batch.cuda(non_blocking=True)
         batch = batch.squeeze(1).view(batch.size(0), -1)
