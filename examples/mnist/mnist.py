@@ -145,7 +145,6 @@ def main(
             actual.append(value)
         if cuda:
             batch = batch.cuda(non_blocking=True)
-        batch = batch.squeeze(1).view(batch.size(0), -1)
         features.append(autoencoder.encoder(batch).detach().cpu())
     actual = torch.cat(actual).long().cpu().numpy()
     predicted = kmeans.fit_predict(torch.cat(features).numpy())
