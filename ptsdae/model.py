@@ -28,7 +28,7 @@ def train(dataset: torch.utils.data.Dataset,
     Function to train an autoencoder using the provided dataset. If the dataset consists of 2-tuples or lists of
     (feature, prediction), then the prediction is stripped away.
 
-    :param dataset: training Dataset
+    :param dataset: training Dataset, consisting of tensors shape [batch_size, features]
     :param autoencoder: autoencoder to train
     :param epochs: number of training epochs
     :param batch_size: batch size for training
@@ -84,7 +84,6 @@ def train(dataset: torch.utils.data.Dataset,
                 batch = batch[0]
             if cuda:
                 batch = batch.cuda(non_blocking=True)
-            batch = batch.squeeze(1).view(batch.size(0), -1)
             # run the batch through the autoencoder and obtain the output
             if corruption is not None:
                 output = autoencoder(F.dropout(batch, corruption))
