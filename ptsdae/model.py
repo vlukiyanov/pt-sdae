@@ -23,6 +23,7 @@ def train(dataset: torch.utils.data.Dataset,
           silent: bool = False,
           update_freq: Optional[int] = 1,
           update_callback: Optional[Callable[[float, float], None]] = None,
+          num_workers: Optional[int] = None,
           epoch_callback: Optional[Callable[[int, torch.nn.Module], None]] = None) -> None:
     """
     Function to train an autoencoder using the provided dataset. If the dataset consists of 2-tuples or lists of
@@ -41,6 +42,7 @@ def train(dataset: torch.utils.data.Dataset,
     :param silent: set to True to prevent printing out summary statistics, defaults to False
     :param update_freq: frequency of batches with which to update counter, set to None disables, default 1
     :param update_callback: optional function of loss and validation loss to update
+    :param num_workers: optional number of workers to use for data loading
     :param epoch_callback: optional function of epoch and model
     :return: None
     """
@@ -49,7 +51,8 @@ def train(dataset: torch.utils.data.Dataset,
         batch_size=batch_size,
         pin_memory=False,
         sampler=sampler,
-        shuffle=True
+        shuffle=True if sampler is None else False,
+        num_workers=num_workers if num_workers is not None else 0
     )
     if validation is not None:
         validation_loader = DataLoader(
@@ -158,6 +161,7 @@ def pretrain(dataset,
              silent: bool = False,
              update_freq: Optional[int] = 1,
              update_callback: Optional[Callable[[float, float], None]] = None,
+             num_workers: Optional[int] = None,
              epoch_callback: Optional[Callable[[int, torch.nn.Module], None]] = None) -> None:
     """
     Given an autoencoder, train it using the data provided in the dataset; for simplicity the accuracy is reported only
@@ -177,6 +181,7 @@ def pretrain(dataset,
     :param silent: set to True to prevent printing out summary statistics, defaults to False
     :param update_freq: frequency of batches with which to update counter, None disables, default 1
     :param update_callback: function of loss and validation loss to update
+    :param num_workers: optional number of workers to use for data loading
     :param epoch_callback: function of epoch and model
     :return: None
     """
@@ -215,6 +220,7 @@ def pretrain(dataset,
             silent=silent,
             update_freq=update_freq,
             update_callback=update_callback,
+            num_workers=num_workers,
             epoch_callback=epoch_callback
         )
         # copy the weights
