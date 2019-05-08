@@ -45,14 +45,9 @@ def cluster_accuracy(y_true, y_predicted, cluster_number: Optional[int] = None):
     count_matrix = np.zeros((cluster_number, cluster_number), dtype=np.int64)
     for i in range(y_predicted.size):
         count_matrix[y_predicted[i], y_true[i]] += 1
-    reassignment = np.dstack(linear_sum_assignment(count_matrix.max() - count_matrix))[0]
-    accuracy = count_matrix[reassignment[:, 0], reassignment[:, 1]].sum() / y_predicted.size
-    return {item[0]: item[1] for item in reassignment}, accuracy
 
-    """
-    # A better style for line 48~50 is as below:
     row_ind, col_ind = linear_sum_assignment(count_matrix.max() - count_matrix)
     reassignment = dict(zip(row_ind, col_ind))
     accuracy = count_matrix[row_ind, col_ind].sum() / y_predicted.size
     return reassignment, accuracy
-    """
+    
