@@ -148,7 +148,7 @@ def main(
         features.append(autoencoder.encoder(batch).detach().cpu())
     actual = torch.cat(actual).long().cpu().numpy()
     predicted = kmeans.fit_predict(torch.cat(features).numpy())
-    reassignment, accuracy = cluster_accuracy(predicted, actual)
+    reassignment, accuracy = cluster_accuracy(actual, predicted)
     print('Final k-Means accuracy: %s' % accuracy)
     predicted_reassigned = [reassignment[item] for item in predicted]  # TODO numpify
     if not testing_mode:
