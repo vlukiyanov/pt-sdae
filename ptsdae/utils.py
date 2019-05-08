@@ -50,4 +50,3 @@ def cluster_accuracy(y_true, y_predicted, cluster_number: Optional[int] = None):
     reassignment = dict(zip(row_ind, col_ind))
     accuracy = count_matrix[row_ind, col_ind].sum() / y_predicted.size
     return reassignment, accuracy
-    
