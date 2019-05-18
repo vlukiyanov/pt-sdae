@@ -16,3 +16,4 @@ torchvision>=0.2.1
 pytest>=3.8.0
 pytest-cov>=2.6.0
 codecov>=2.0.15
+Faker>=1.0.5
