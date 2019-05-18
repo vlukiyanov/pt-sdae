@@ -8,8 +8,8 @@ from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import TensorDataset
+from typing import Any, Callable
 from scipy.sparse import issparse
-
 
 from ptsdae.sdae import StackedDenoisingAutoEncoder
 import ptsdae.model as ae
@@ -22,20 +22,24 @@ class SDAETransformer(TransformerMixin, BaseEstimator):
                  batch_size: int = 256,
                  pretrain_epochs: int = 200,
                  finetune_epochs: int = 500,
-                 lr: float = 0.1,
                  corruption: Optional[float] = 0.2,
+                 optimiser_pretrain: Callable[[torch.nn.Module], torch.optim.Optimizer] = lambda x: SGD(x.parameters(), lr=0.1, momentum=0.9),
+                 optimiser_train: Callable[[torch.nn.Module], torch.optim.Optimizer] = lambda x: SGD(x.parameters(), lr=0.1, momentum=0.9),
+                 scheduler: Optional[Callable[[torch.optim.Optimizer], Any]] = lambda x: StepLR(x, 100, gamma=0.1),
                  final_activation: Optional[torch.nn.Module] = None) -> None:
         self.cuda = torch.cuda.is_available() if cuda is None else cuda
         self.batch_size = batch_size
         self.dimensions = dimensions
         self.pretrain_epochs = pretrain_epochs
         self.finetune_epochs = finetune_epochs
-        self.lr = lr
+        self.optimiser_pretrain = optimiser_pretrain
+        self.optimiser_train = optimiser_train
+        self.scheduler = scheduler
         self.corruption = corruption
         self.autoencoder = None
         self.final_activation = final_activation
 
-    def fit(self, X, y=None) -> None:
+    def fit(self, X, y=None):
         if issparse(X):
             X = X.todense()
         ds = TensorDataset(torch.from_numpy(X.astype(np.float32)))
@@ -48,12 +52,12 @@ class SDAETransformer(TransformerMixin, BaseEstimator):
             cuda=self.cuda,
             epochs=self.pretrain_epochs,
             batch_size=self.batch_size,
-            optimizer=lambda model: SGD(model.parameters(), lr=self.lr, momentum=0.9),
-            scheduler=lambda x: StepLR(x, 100, gamma=0.1),
+            optimizer=self.optimiser_pretrain,
+            scheduler=self.scheduler,
             corruption=0.2,
             silent=True
         )
-        ae_optimizer = SGD(params=self.autoencoder.parameters(), lr=self.lr, momentum=0.9)
+        ae_optimizer = self.optimiser_train(self.autoencoder)
         ae.train(
             ds,
             self.autoencoder,
@@ -61,10 +65,11 @@ class SDAETransformer(TransformerMixin, BaseEstimator):
             epochs=self.finetune_epochs,
             batch_size=self.batch_size,
             optimizer=ae_optimizer,
-            scheduler=StepLR(ae_optimizer, 100, gamma=0.1),
+            scheduler=self.scheduler(ae_optimizer),
             corruption=self.corruption,
             silent=True
         )
+        return self
 
     def transform(self, X):
         if self.autoencoder is None:
