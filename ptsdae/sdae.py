@@ -63,7 +63,6 @@ class StackedDenoisingAutoEncoder(nn.Module):
         self.dimensions = dimensions
         self.embedding_dimension = dimensions[0]
         self.hidden_dimension = dimensions[-1]
-        self.activation = activation
         # construct the encoder
         encoder_units = build_units(self.dimensions[:-1], activation)
         encoder_units.extend(build_units([self.dimensions[-2], self.dimensions[-1]], None))
