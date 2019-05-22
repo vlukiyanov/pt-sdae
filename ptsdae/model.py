@@ -250,13 +250,12 @@ def pretrain(dataset,
             current_validation = None
 
 
-def predict(
-        dataset: torch.utils.data.Dataset,
-        model: torch.nn.Module,
-        batch_size: int,
-        cuda: bool = True,
-        silent: bool = False,
-        encode: bool = True) -> torch.Tensor:
+def predict(dataset: torch.utils.data.Dataset,
+            model: torch.nn.Module,
+            batch_size: int,
+            cuda: bool = True,
+            silent: bool = False,
+            encode: bool = True) -> torch.Tensor:
     """
     Given a dataset, run the model in evaluation mode with the inputs in batches and concatenate the
     output.
