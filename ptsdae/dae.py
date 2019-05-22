@@ -6,14 +6,13 @@ from typing import Optional
 
 
 class DenoisingAutoencoder(nn.Module):
-    def __init__(
-            self,
-            embedding_dimension: int,
-            hidden_dimension: int,
-            activation: Optional[torch.nn.Module] = nn.ReLU(),
-            gain: float = nn.init.calculate_gain('relu'),
-            corruption: Optional[torch.nn.Module] = None,
-            tied: bool = False) -> None:
+    def __init__(self,
+                 embedding_dimension: int,
+                 hidden_dimension: int,
+                 activation: Optional[torch.nn.Module] = nn.ReLU(),
+                 gain: float = nn.init.calculate_gain('relu'),
+                 corruption: Optional[torch.nn.Module] = None,
+                 tied: bool = False) -> None:
         """
         Autoencoder composed of two Linear units with optional encoder activation and corruption.
 

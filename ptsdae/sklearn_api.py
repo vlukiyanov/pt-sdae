@@ -15,7 +15,7 @@ from ptsdae.sdae import StackedDenoisingAutoEncoder
 import ptsdae.model as ae
 
 
-class SDAETransformer(TransformerMixin, BaseEstimator):
+class SDAETransformerBase(TransformerMixin, BaseEstimator):
     def __init__(self,
                  dimensions: List[int],
                  cuda: Optional[bool] = None,
@@ -71,26 +71,6 @@ class SDAETransformer(TransformerMixin, BaseEstimator):
         )
         return self
 
-    def transform(self, X):
-        if self.autoencoder is None:
-            raise NotFittedError
-        if issparse(X):
-            X = X.todense()
-        self.autoencoder.eval()
-        ds = TensorDataset(torch.from_numpy(X.astype(np.float32)))
-        dataloader = DataLoader(
-            ds,
-            batch_size=self.batch_size,
-            shuffle=False
-        )
-        features = []
-        for index, batch in enumerate(dataloader):
-            batch = batch[0]
-            if self.cuda:
-                batch = batch.cuda(non_blocking=True)
-            features.append(self.autoencoder.encoder(batch).detach().cpu())
-        return torch.cat(features).numpy()
-
     def score(self, X, y=None, sample_weight=None) -> float:
         loss_function = torch.nn.MSELoss()
         if self.autoencoder is None:
@@ -112,3 +92,57 @@ class SDAETransformer(TransformerMixin, BaseEstimator):
             output = self.autoencoder(batch)
             loss += float(loss_function(output, batch).item())
         return loss
+
+
+def _transform(X, autoencoder, batch_size, cuda):
+    ds = TensorDataset(torch.from_numpy(X.astype(np.float32)))
+    dataloader = DataLoader(
+        ds,
+        batch_size=batch_size,
+        shuffle=False
+    )
+    features = []
+    for index, batch in enumerate(dataloader):
+        batch = batch[0]
+        if cuda:
+            batch = batch.cuda(non_blocking=True)
+        features.append(autoencoder.encoder(batch).detach().cpu())
+    return torch.cat(features).numpy()
+
+
+class SDAETransformer(SDAETransformerBase):
+    def transform(self, X):
+        if self.autoencoder is None:
+            raise NotFittedError
+        if issparse(X):
+            X = X.todense()
+        self.autoencoder.eval()
+        return _transform(X, self.autoencoder, self.batch_size, self.cuda)
+
+
+class SDAERepresentationTransformer(SDAETransformerBase):
+    def transform(self, X):
+        if self.autoencoder is None:
+            raise NotFittedError
+        if issparse(X):
+            X = X.todense()
+        self.autoencoder.eval()
+        ds = TensorDataset(torch.from_numpy(X.astype(np.float32)))
+        dataloader = DataLoader(
+            ds,
+            batch_size=self.batch_size,
+            shuffle=False
+        )
+        features_encoder = [[] for _ in self.autoencoder.encoder]
+        features_decoder = [[] for _ in self.autoencoder.decoder]
+        for index, batch in enumerate(dataloader):
+            batch = batch[0]
+            if self.cuda:
+                batch = batch.cuda(non_blocking=True)
+            for index, unit in enumerate(self.autoencoder.encoder):
+                batch = unit(batch)
+                features_encoder[index].append(batch.detach().cpu())
+            for index, unit in enumerate(self.autoencoder.decoder):
+                batch = unit(batch)
+                features_decoder[index].append(batch.detach().cpu())
+        return np.concatenate([torch.cat(x).numpy() for x in features_encoder + features_decoder[:-1]], axis=1)

@@ -40,13 +40,12 @@ def default_initialise_weight_bias_(weight: torch.Tensor, bias: torch.Tensor, ga
 
 
 class StackedDenoisingAutoEncoder(nn.Module):
-    def __init__(
-            self,
-            dimensions: List[int],
-            activation: torch.nn.Module = nn.ReLU(),
-            final_activation: Optional[torch.nn.Module] = nn.ReLU(),
-            weight_init: Callable[[torch.Tensor, torch.Tensor, float], None] = default_initialise_weight_bias_,
-            gain: float = nn.init.calculate_gain('relu')):
+    def __init__(self,
+                 dimensions: List[int],
+                 activation: torch.nn.Module = nn.ReLU(),
+                 final_activation: Optional[torch.nn.Module] = nn.ReLU(),
+                 weight_init: Callable[[torch.Tensor, torch.Tensor, float], None] = default_initialise_weight_bias_,
+                 gain: float = nn.init.calculate_gain('relu')):
         """
         Autoencoder composed of a symmetric decoder and encoder components accessible via the encoder and decoder
         attributes. The dimensions input is the list of dimensions occurring in a single stack
@@ -63,7 +62,6 @@ class StackedDenoisingAutoEncoder(nn.Module):
         self.dimensions = dimensions
         self.embedding_dimension = dimensions[0]
         self.hidden_dimension = dimensions[-1]
-        self.activation = activation
         # construct the encoder
         encoder_units = build_units(self.dimensions[:-1], activation)
         encoder_units.extend(build_units([self.dimensions[-2], self.dimensions[-1]], None))
