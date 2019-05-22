@@ -2,12 +2,11 @@ from typing import Any, Callable, Optional
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 from ptsdae.dae import DenoisingAutoencoder
 from ptsdae.sdae import StackedDenoisingAutoEncoder
-from ptsdae.utils import SimpleDataset
 
 
 def train(dataset: torch.utils.data.Dataset,
@@ -227,7 +226,7 @@ def pretrain(dataset,
         sub_autoencoder.copy_weights(encoder, decoder)
         # pass the dataset through the encoder part of the subautoencoder
         if index != (number_of_subautoencoders - 1):
-            current_dataset = SimpleDataset(
+            current_dataset = TensorDataset(
                 predict(
                     current_dataset,
                     sub_autoencoder,
@@ -237,7 +236,7 @@ def pretrain(dataset,
                 )
             )
             if current_validation is not None:
-                current_validation = SimpleDataset(
+                current_validation = TensorDataset(
                     predict(
                         current_validation,
                         sub_autoencoder,
@@ -251,13 +250,12 @@ def pretrain(dataset,
             current_validation = None
 
 
-def predict(
-        dataset: torch.utils.data.Dataset,
-        model: torch.nn.Module,
-        batch_size: int,
-        cuda: bool = True,
-        silent: bool = False,
-        encode: bool = True) -> torch.Tensor:
+def predict(dataset: torch.utils.data.Dataset,
+            model: torch.nn.Module,
+            batch_size: int,
+            cuda: bool = True,
+            silent: bool = False,
+            encode: bool = True) -> torch.Tensor:
     """
     Given a dataset, run the model in evaluation mode with the inputs in batches and concatenate the
     output.
