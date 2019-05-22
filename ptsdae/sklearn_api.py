@@ -145,4 +145,4 @@ class SDAERepresentationTransformer(SDAETransformerBase):
             for index, unit in enumerate(self.autoencoder.decoder):
                 batch = unit(batch)
                 features_decoder[index].append(batch.detach().cpu())
-        return [torch.cat(x).numpy() for x in features_encoder + features_decoder]
+        return np.concatenate([torch.cat(x).numpy() for x in features_encoder + features_decoder[:-1]], axis=1)

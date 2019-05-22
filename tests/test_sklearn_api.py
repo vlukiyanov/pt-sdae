@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline, Pipeline
 
-from ptsdae.sklearn_api import SDAETransformer, SDAERepresentationTransformer, _transform
+from ptsdae.sklearn_api import SDAETransformer, SDAERepresentationTransformer
 
 
 class TestSDAETransformer(TestCase):
@@ -65,5 +65,4 @@ class TestSDAERepresentationTransformer(TestCase):
         )
         pipeline.fit([fake.text() for _ in range(100)])
         result = pipeline.transform([fake.text() for _ in range(20)])
-        for index, size in enumerate(sizes[1:] + sizes[1::-1]):
-            self.assertEqual(result[index].shape, (20, size))
+        self.assertEqual(result.shape, (20, 10 + 2 + 10))
