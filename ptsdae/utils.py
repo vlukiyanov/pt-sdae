@@ -1,19 +1,23 @@
+from cytoolz.itertoolz import sliding_window
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 import torch
-from torch.utils.data import Dataset
+import torch.nn as nn
 from typing import List, Optional
 
 
-class SimpleDataset(Dataset):
-    def __init__(self, data: List[torch.Tensor]):
-        self.data = data
+class Classifier(nn.Module):
+    def __init__(self, dimensions: List[int]):
+        super(Classifier, self).__init__()
+        units = []
+        for from_dimension, to_dimension in sliding_window(2, dimensions):
+            units.append(nn.Linear(from_dimension, to_dimension))
+            units.append(nn.ReLU())
+        self.classifier = nn.Sequential(*units[:-1])
+        self.softmax = nn.LogSoftmax(dim=1)
 
-    def __getitem__(self, index: int) -> torch.Tensor:
-        return self.data[index]
-
-    def __len__(self) -> int:
-        return len(self.data)
+    def forward(self, batch):
+        return self.softmax(self.classifier(batch))
 
 
 def pretrain_accuracy(output: torch.Tensor, batch: torch.Tensor) -> float:
