@@ -16,4 +16,4 @@ Here is an example [confusion matrix](http://scikit-learn.org/stable/modules/gen
 
 This is distributed as a Python package `ptsdae` and can be installed with `python setup.py install`. The PyTorch `nn.Module` class representing the SDAE is `StackedDenoisingAutoEncoder` in `ptsdae.sdae`, while the `pretrain` and `train` functions from `ptsdae.model` are used to train the autoencoder.
 
-Currently this code is used in a PyTorch implementation of DEC, see https://github.com/vlukiyanov/pt-dec.
+Currently this code is used in a PyTorch implementation of DEC, see <https://github.com/vlukiyanov/pt-dec>.
