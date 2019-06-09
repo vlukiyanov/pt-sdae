@@ -1,5 +1,6 @@
 # pt-sdae
 [![Build Status](https://travis-ci.org/vlukiyanov/pt-sdae.svg?branch=master)](https://travis-ci.org/vlukiyanov/pt-sdae) [![codecov](https://codecov.io/gh/vlukiyanov/pt-sdae/branch/master/graph/badge.svg)](https://codecov.io/gh/vlukiyanov/pt-sdae)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/87f84d7da07b4a0b94b7a0fac32c164b)](https://www.codacy.com/app/vlukiyanov/pt-sdae?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=vlukiyanov/pt-sdae&amp;utm_campaign=Badge_Grade)
 
 PyTorch implementation of a version of the Stacked Denoising AutoEncoder (*note this implementation is unofficial*). Compatible with PyTorch 1.0.0 and Python 3.6 or 3.7 with or without CUDA.
 
