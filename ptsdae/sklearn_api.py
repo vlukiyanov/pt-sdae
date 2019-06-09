@@ -102,7 +102,7 @@ def _transform(X, autoencoder, batch_size, cuda):
         shuffle=False
     )
     features = []
-    for index, batch in enumerate(dataloader):
+    for batch in dataloader:
         batch = batch[0]
         if cuda:
             batch = batch.cuda(non_blocking=True)
