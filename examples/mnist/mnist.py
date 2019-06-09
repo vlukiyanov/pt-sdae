@@ -139,7 +139,7 @@ def main(
     autoencoder.eval()
     features = []
     actual = []
-    for index, batch in enumerate(dataloader):
+    for batch in dataloader:
         if (isinstance(batch, tuple) or isinstance(batch, list)) and len(batch) == 2:
             batch, value = batch  # if we have a prediction label, separate it to actual
             actual.append(value)
