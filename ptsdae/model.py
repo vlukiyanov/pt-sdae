@@ -283,7 +283,7 @@ def predict(dataset: torch.utils.data.Dataset,
     features = []
     if isinstance(model, torch.nn.Module):
         model.eval()
-    for index, batch in enumerate(data_iterator):
+    for batch in data_iterator:
         if isinstance(batch, tuple) or isinstance(batch, list) and len(batch) in [1, 2]:
             batch = batch[0]
         if cuda:
