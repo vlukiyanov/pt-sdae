@@ -9,7 +9,7 @@ install:
   - python setup.py install
 # command to run tests
 script:
-  - black --fast --check ptdec/.
+  - black --fast --check ptsdae/.
   - black --fast --check examples/.
   - black --fast --check tests/.
   - pytest --cov=ptsdae
