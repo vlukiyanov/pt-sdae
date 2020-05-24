@@ -14,19 +14,16 @@ class TestBuildUnits(TestCase):
         self.assertEqual(len(units5), 5)
         for units in [units1, units3, units5]:
             for item in units:
-                self.assertTrue(hasattr(item, 'linear'))
-                self.assertTrue(hasattr(item, 'activation'))
+                self.assertTrue(hasattr(item, "linear"))
+                self.assertTrue(hasattr(item, "activation"))
                 self.assertIsInstance(item.linear, torch.nn.Linear)
                 self.assertIsInstance(item.activation, torch.nn.ReLU)
 
     def test_arguments(self):
-        units = build_units(
-            [100, 10, 5, 2],
-            None,
-        )
+        units = build_units([100, 10, 5, 2], None,)
         for item in units:
-            self.assertTrue(hasattr(item, 'linear'))
-            self.assertFalse(hasattr(item, 'activation'))
+            self.assertTrue(hasattr(item, "linear"))
+            self.assertFalse(hasattr(item, "activation"))
             self.assertIsInstance(item.linear, torch.nn.Linear)
 
 

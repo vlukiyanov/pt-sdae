@@ -6,13 +6,15 @@ from typing import Optional
 
 
 class DenoisingAutoencoder(nn.Module):
-    def __init__(self,
-                 embedding_dimension: int,
-                 hidden_dimension: int,
-                 activation: Optional[torch.nn.Module] = nn.ReLU(),
-                 gain: float = nn.init.calculate_gain('relu'),
-                 corruption: Optional[torch.nn.Module] = None,
-                 tied: bool = False) -> None:
+    def __init__(
+        self,
+        embedding_dimension: int,
+        hidden_dimension: int,
+        activation: Optional[torch.nn.Module] = nn.ReLU(),
+        gain: float = nn.init.calculate_gain("relu"),
+        corruption: Optional[torch.nn.Module] = None,
+        tied: bool = False,
+    ) -> None:
         """
         Autoencoder composed of two Linear units with optional encoder activation and corruption.
 
@@ -33,17 +35,15 @@ class DenoisingAutoencoder(nn.Module):
         self.encoder_weight = Parameter(
             torch.Tensor(hidden_dimension, embedding_dimension)
         )
-        self.encoder_bias = Parameter(
-            torch.Tensor(hidden_dimension)
-        )
+        self.encoder_bias = Parameter(torch.Tensor(hidden_dimension))
         self._initialise_weight_bias(self.encoder_weight, self.encoder_bias, self.gain)
         # decoder parameters
-        self.decoder_weight = Parameter(
-            torch.Tensor(embedding_dimension, hidden_dimension)
-        ) if not tied else self.encoder_weight.t()
-        self.decoder_bias = Parameter(
-            torch.Tensor(embedding_dimension)
+        self.decoder_weight = (
+            Parameter(torch.Tensor(embedding_dimension, hidden_dimension))
+            if not tied
+            else self.encoder_weight.t()
         )
+        self.decoder_bias = Parameter(torch.Tensor(embedding_dimension))
         self._initialise_weight_bias(self.decoder_weight, self.decoder_bias, self.gain)
 
     @staticmethod
