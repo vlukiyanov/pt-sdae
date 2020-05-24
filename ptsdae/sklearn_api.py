@@ -16,17 +16,25 @@ import ptsdae.model as ae
 
 
 class SDAETransformerBase(TransformerMixin, BaseEstimator):
-    def __init__(self,
-                 dimensions: List[int],
-                 cuda: Optional[bool] = None,
-                 batch_size: int = 256,
-                 pretrain_epochs: int = 200,
-                 finetune_epochs: int = 500,
-                 corruption: Optional[float] = 0.2,
-                 optimiser_pretrain: Callable[[torch.nn.Module], torch.optim.Optimizer] = lambda x: SGD(x.parameters(), lr=0.1, momentum=0.9),
-                 optimiser_train: Callable[[torch.nn.Module], torch.optim.Optimizer] = lambda x: SGD(x.parameters(), lr=0.1, momentum=0.9),
-                 scheduler: Optional[Callable[[torch.optim.Optimizer], Any]] = lambda x: StepLR(x, 100, gamma=0.1),
-                 final_activation: Optional[torch.nn.Module] = None) -> None:
+    def __init__(
+        self,
+        dimensions: List[int],
+        cuda: Optional[bool] = None,
+        batch_size: int = 256,
+        pretrain_epochs: int = 200,
+        finetune_epochs: int = 500,
+        corruption: Optional[float] = 0.2,
+        optimiser_pretrain: Callable[
+            [torch.nn.Module], torch.optim.Optimizer
+        ] = lambda x: SGD(x.parameters(), lr=0.1, momentum=0.9),
+        optimiser_train: Callable[
+            [torch.nn.Module], torch.optim.Optimizer
+        ] = lambda x: SGD(x.parameters(), lr=0.1, momentum=0.9),
+        scheduler: Optional[Callable[[torch.optim.Optimizer], Any]] = lambda x: StepLR(
+            x, 100, gamma=0.1
+        ),
+        final_activation: Optional[torch.nn.Module] = None,
+    ) -> None:
         self.cuda = torch.cuda.is_available() if cuda is None else cuda
         self.batch_size = batch_size
         self.dimensions = dimensions
@@ -43,7 +51,9 @@ class SDAETransformerBase(TransformerMixin, BaseEstimator):
         if issparse(X):
             X = X.todense()
         ds = TensorDataset(torch.from_numpy(X.astype(np.float32)))
-        self.autoencoder = StackedDenoisingAutoEncoder(self.dimensions, final_activation=self.final_activation)
+        self.autoencoder = StackedDenoisingAutoEncoder(
+            self.dimensions, final_activation=self.final_activation
+        )
         if self.cuda:
             self.autoencoder.cuda()
         ae.pretrain(
@@ -55,7 +65,7 @@ class SDAETransformerBase(TransformerMixin, BaseEstimator):
             optimizer=self.optimiser_pretrain,
             scheduler=self.scheduler,
             corruption=0.2,
-            silent=True
+            silent=True,
         )
         ae_optimizer = self.optimiser_train(self.autoencoder)
         ae.train(
@@ -67,7 +77,7 @@ class SDAETransformerBase(TransformerMixin, BaseEstimator):
             optimizer=ae_optimizer,
             scheduler=self.scheduler(ae_optimizer),
             corruption=self.corruption,
-            silent=True
+            silent=True,
         )
         return self
 
@@ -79,11 +89,7 @@ class SDAETransformerBase(TransformerMixin, BaseEstimator):
             X = X.todense()
         self.autoencoder.eval()
         ds = TensorDataset(torch.from_numpy(X.astype(np.float32)))
-        dataloader = DataLoader(
-            ds,
-            batch_size=self.batch_size,
-            shuffle=False
-        )
+        dataloader = DataLoader(ds, batch_size=self.batch_size, shuffle=False)
         loss = 0
         for index, batch in enumerate(dataloader):
             batch = batch[0]
@@ -96,11 +102,7 @@ class SDAETransformerBase(TransformerMixin, BaseEstimator):
 
 def _transform(X, autoencoder, batch_size, cuda):
     ds = TensorDataset(torch.from_numpy(X.astype(np.float32)))
-    dataloader = DataLoader(
-        ds,
-        batch_size=batch_size,
-        shuffle=False
-    )
+    dataloader = DataLoader(ds, batch_size=batch_size, shuffle=False)
     features = []
     for batch in dataloader:
         batch = batch[0]
@@ -128,11 +130,7 @@ class SDAERepresentationTransformer(SDAETransformerBase):
             X = X.todense()
         self.autoencoder.eval()
         ds = TensorDataset(torch.from_numpy(X.astype(np.float32)))
-        dataloader = DataLoader(
-            ds,
-            batch_size=self.batch_size,
-            shuffle=False
-        )
+        dataloader = DataLoader(ds, batch_size=self.batch_size, shuffle=False)
         features_encoder = [[] for _ in self.autoencoder.encoder]
         features_decoder = [[] for _ in self.autoencoder.decoder]
         for index, batch in enumerate(dataloader):
@@ -145,4 +143,7 @@ class SDAERepresentationTransformer(SDAETransformerBase):
             for index, unit in enumerate(self.autoencoder.decoder):
                 batch = unit(batch)
                 features_decoder[index].append(batch.detach().cpu())
-        return np.concatenate([torch.cat(x).numpy() for x in features_encoder + features_decoder[:-1]], axis=1)
+        return np.concatenate(
+            [torch.cat(x).numpy() for x in features_encoder + features_decoder[:-1]],
+            axis=1,
+        )

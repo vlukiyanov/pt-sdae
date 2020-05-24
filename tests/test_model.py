@@ -18,7 +18,7 @@ def test_train_with_prediction():
         epochs=1,
         batch_size=10,
         optimizer=optimizer,
-        cuda=False
+        cuda=False,
     )
     autoencoder.train.assert_called_once()
     assert autoencoder.call_count == 10
@@ -38,7 +38,7 @@ def test_train_without_prediction():
         epochs=1,
         batch_size=10,
         optimizer=optimizer,
-        cuda=False
+        cuda=False,
     )
     autoencoder.train.assert_called_once()
     assert autoencoder.call_count == 10
