@@ -38,13 +38,21 @@ class DenoisingAutoencoder(nn.Module):
         self.encoder_bias = Parameter(torch.Tensor(hidden_dimension))
         self._initialise_weight_bias(self.encoder_weight, self.encoder_bias, self.gain)
         # decoder parameters
-        self.decoder_weight = (
+        self._decoder_weight = (
             Parameter(torch.Tensor(embedding_dimension, hidden_dimension))
             if not tied
-            else self.encoder_weight.t()
+            else None
         )
         self.decoder_bias = Parameter(torch.Tensor(embedding_dimension))
-        self._initialise_weight_bias(self.decoder_weight, self.decoder_bias, self.gain)
+        self._initialise_weight_bias(self._decoder_weight, self.decoder_bias, self.gain)
+
+    @property
+    def decoder_weight(self):
+        return (
+            self._decoder_weight
+            if self._decoder_weight is not None
+            else self.encoder_weight.t()
+        )
 
     @staticmethod
     def _initialise_weight_bias(weight: torch.Tensor, bias: torch.Tensor, gain: float):
@@ -56,7 +64,8 @@ class DenoisingAutoencoder(nn.Module):
         :param gain: gain for use in initialiser
         :return: None
         """
-        nn.init.xavier_uniform_(weight, gain)
+        if weight is not None:
+            nn.init.xavier_uniform_(weight, gain)
         nn.init.constant_(bias, 0)
 
     def copy_weights(self, encoder: torch.nn.Linear, decoder: torch.nn.Linear) -> None:
